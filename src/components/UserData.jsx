@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import Form from "react-bootstrap/form";
 import Button from "react-bootstrap/button";
+import UserDataTable from "./UserDataTable";
+import { toast } from "react-toastify";
+import "./dataSections.css";
 
 const UserData = () => {
   const [renderResults, setRenderResults] = useState(false);
@@ -10,6 +13,8 @@ const UserData = () => {
   const onChangeName = (e) => {
     setUserName(e.target.value);
   };
+
+  const [userResults, setUserResults] = useState([]);
 
   let myHeaders = new Headers();
   myHeaders.append(
@@ -24,64 +29,85 @@ const UserData = () => {
 
   const getUserData = async function () {
     try {
-      let urlsToHit = [];
+      setUserResults([]);
+      setRenderResults(false);
+      let PushEventsData = [];
       const response = await fetch(
-        `https://api.github.com/users/${userName}/repos`
+        `https://api.github.com/users/${userName}/events`,
+        requestOptions
       );
 
       const parseRes = await response.json();
 
-      parseRes.map((repo) => {
-        urlsToHit.push(repo.url);
+      parseRes.map((event) => {
+        if (event.type === "PushEvent")
+          PushEventsData.push({
+            eventType: event.type,
+            repoName: event.repo.name,
+            date: Date(event.created_at),
+          });
       });
 
-      console.log("Here are the urls that you need to hit: ", urlsToHit);
+      const reposList = [];
+      PushEventsData.map((event) => reposList.push(event.repoName));
 
-      let namesAndEmails = [];
+      let arrayCopy = reposList.slice(0);
 
-      // urlsToHit.map(async (url, index) => {
-      //   const response = await fetch(`${url}`, requestOptions);
-      //   const parseRes = await response.json();
-      //   // console.log("Name: ", parseRes.name, "Email: ", parseRes.email);
-      //   setOrgData((orgData) => [
-      //     ...orgData,
-      //     { name: parseRes.name, email: parseRes.email },
-      //   ]);
-      //   namesAndEmails.push({
-      //     name: parseRes.name,
-      //     email: parseRes.email,
-      //   });
-      // });
+      // The following 2-step loop determines which Events returned are from the same repo.
+      // It allows me to return the count of commits to the same repo rather than duplicate records.
 
-      // setOrgData(parseRes);
+      for (let index = 0; index < reposList.length; index++) {
+        let myCount = 0;
+        let date = PushEventsData[index].date;
+        // Subloop: Go through each other object in the array and check for duplicates (the same repo name).
+        // Delete duplicates from array copy and return +1 commit count for each.
+        for (let subIndex = 0; subIndex < arrayCopy.length; subIndex++) {
+          if (reposList[index] === arrayCopy[subIndex]) {
+            myCount++;
+            delete arrayCopy[subIndex];
+          }
+        }
+
+        if (myCount > 0) {
+          setUserResults((userResults) => [
+            ...userResults,
+            {
+              repoName: reposList[index],
+              commitCount: myCount,
+              // GitHub returns Events results in reverse chronological order. No need to perform date operations here.
+              mostRecent: date,
+            },
+          ]);
+        }
+      }
+
       setRenderResults(true);
-
-      // console.log(orgName);
     } catch (error) {
       console.error(error.message);
+      toast.error("Invalid Username", {
+        autoClose: 3000,
+        pauseOnHover: false,
+      });
     }
   };
 
   return (
-    <div className="container">
-      <h3>User Data</h3>
+    <div>
+      <h3 className="Section-Header">User Data</h3>
       <Form>
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Username</Form.Label>
           <Form.Control
             type="text"
             placeholder="Enter Username"
             value={userName}
             onChange={onChangeName}
           />
-          {/* <Form.Text className="text-muted">
-            We'll never share your email with anyone else.
-          </Form.Text> */}
         </Form.Group>
         <Button variant="primary" onClick={() => getUserData()}>
           Search
         </Button>
       </Form>
+      {renderResults === true && <UserDataTable data={userResults} />}
     </div>
   );
 };

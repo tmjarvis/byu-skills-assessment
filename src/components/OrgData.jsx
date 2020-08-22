@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import DataTable from "./common/DataTable";
+import OrgDataTable from "./OrgDataTable";
+import { toast } from "react-toastify";
+import "./dataSections.css";
+require("dotenv").config();
 
 const OrgData = () => {
   // renderResults set to true when the search button is clicked. Keeps the interface cleaner at the start.
@@ -32,9 +35,12 @@ const OrgData = () => {
 
   const getOrgData = async function () {
     try {
+      setOrgData([]);
+      setRenderResults(false);
       let urlsToHit = [];
       const response = await fetch(
-        `https://api.github.com/orgs/${orgName}/public_members`
+        `https://api.github.com/orgs/${orgName}/public_members`,
+        requestOptions
       );
 
       const parseRes = await response.json();
@@ -43,53 +49,49 @@ const OrgData = () => {
         urlsToHit.push(user.url);
       });
 
-      console.log("Here are the urls that you need to hit: ", urlsToHit);
-
-      let namesAndEmails = [];
-
-      urlsToHit.map(async (url, index) => {
-        const response = await fetch(`${url}`, requestOptions);
-        const parseRes = await response.json();
-        // console.log("Name: ", parseRes.name, "Email: ", parseRes.email);
-        setOrgData((orgData) => [
-          ...orgData,
-          { name: parseRes.name, email: parseRes.email },
-        ]);
-        namesAndEmails.push({
-          name: parseRes.name,
-          email: parseRes.email,
+      if (urlsToHit.length > 0) {
+        urlsToHit.map(async (url, index) => {
+          const response = await fetch(`${url}`, requestOptions);
+          const parseRes = await response.json();
+          setOrgData((orgData) => [
+            ...orgData,
+            {
+              name: parseRes.name || "[ No name was publically provided. ]",
+              email: parseRes.email || "[ No email was publically provided. ]",
+              login: parseRes.login,
+            },
+          ]);
         });
-      });
+      } else {
+        setOrgData("Invalid Username");
+      }
 
-      // setOrgData(parseRes);
       setRenderResults(true);
-
-      // console.log(orgName);
     } catch (error) {
       console.error(error.message);
+      toast.error("Invalid Organization Name", {
+        autoClose: 3000,
+        pauseOnHover: false,
+      });
     }
   };
 
   return (
-    <div className="container">
-      <h3>Organization Data</h3>
+    <div>
+      <h3 className="Section-Header">Organization Data</h3>
       <Form>
         <Form.Group controlId="formBasicEmail">
-          <Form.Label>Organization</Form.Label>
           <Form.Control
             type="text"
             placeholder="Enter Organization Name"
             value={orgName}
             onChange={onChangeName}
           />
-          {/* <Form.Text className="text-muted">
-            We'll never share your email with anyone else.
-          </Form.Text> */}
         </Form.Group>
         <Button variant="primary" onClick={() => getOrgData()}>
           Search
         </Button>
-        {renderResults === true && <DataTable data={orgData} />}
+        {renderResults === true && <OrgDataTable data={orgData} />}
       </Form>
     </div>
   );
