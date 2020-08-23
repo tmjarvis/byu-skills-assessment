@@ -7,6 +7,8 @@ import "./dataSections.css";
 require("dotenv").config();
 
 const OrgData = () => {
+  const apiKey = process.env.REACT_APP_TOKEN;
+
   // renderResults set to true when the search button is clicked. Keeps the interface cleaner at the start.
   const [renderResults, setRenderResults] = useState(false);
 
@@ -23,10 +25,7 @@ const OrgData = () => {
   // This is the data needed for the Fetch requests
 
   let myHeaders = new Headers();
-  myHeaders.append(
-    "Authorization",
-    "Bearer c42957523b8b24b7b9c65defb24e6dd2197a3723"
-  );
+  myHeaders.append("Authorization", `Bearer ${apiKey}`);
   let requestOptions = {
     method: "GET",
     headers: myHeaders,

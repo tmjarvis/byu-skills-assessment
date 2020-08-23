@@ -4,8 +4,11 @@ import Button from "react-bootstrap/button";
 import UserDataTable from "./UserDataTable";
 import { toast } from "react-toastify";
 import "./dataSections.css";
+require("dotenv").config();
 
 const UserData = () => {
+  const apiKey = process.env.REACT_APP_TOKEN;
+
   const [renderResults, setRenderResults] = useState(false);
 
   const [userName, setUserName] = useState([]);
@@ -17,10 +20,7 @@ const UserData = () => {
   const [userResults, setUserResults] = useState([]);
 
   let myHeaders = new Headers();
-  myHeaders.append(
-    "Authorization",
-    "Bearer c42957523b8b24b7b9c65defb24e6dd2197a3723"
-  );
+  myHeaders.append("Authorization", `Bearer ${apiKey}`);
   let requestOptions = {
     method: "GET",
     headers: myHeaders,
