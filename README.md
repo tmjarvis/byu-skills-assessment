@@ -1,7 +1,6 @@
-In the project directory, you can either run:
+I went ahead and hosted this project at this domain:
+https://skills-assessment-36b67.web.app/
 
-### `yarn start` OR `npm start`
+Use the search bars to search for any GitHub organization or user.
 
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-Use the search bars to search for any GitHub organization or user. 
+Feel free to check out my code as well!
